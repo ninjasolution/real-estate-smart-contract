@@ -333,10 +333,10 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
 }
 
 contract CWF is ERC20, AccessControl, Ownable, Pausable {
-
     using SafeMath for uint256;
 
     bytes32 public constant BLACKER_ROLE = keccak256("BLACKER_ROLE");
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     mapping(address => bool) public blacklisted;
 
@@ -347,29 +347,62 @@ contract CWF is ERC20, AccessControl, Ownable, Pausable {
     event AddBlacker(address indexed _account);
     event RemoveBlacker(address indexed _account);
     event UpdateTaxFee(uint16 buyFee, uint256 sellFee);
-    event UpateTaxWallets(address indexed _charityWallet, address indexed _devWallet);
+    event UpateTaxWallets(
+        address indexed _charityWallet,
+        address indexed _devWallet
+    );
 
     uint16 public _maxBalancePercent = 100; // 1%
-    uint16 public _percentDivisor = 10000;
+    uint16 public _percentDivisor = 10000; // 1% = 100
 
     // Address List
     address public charityWallet = 0xA4D1E481417bBB1E472152A4ABD99D9E161Ba8f1;
     address public devWallet = 0xa415D52dd2bf10e2406e9e75a7F411EFCf025e64;
 
     // Tax System
-    uint256 public maxTaxFee = 10; // 10%
-    uint256 public _feeBuyTotal = 5; // 5%
-    uint256 public _feeSellTotal = 5; // 5%
-    uint256 public _devFeePercent = 20; // 1%
+    uint256 public maxTaxFee = 1000; // 10%
+    uint256 public _feeBuyTotal = 200; // 5%
+    uint256 public _feeSellTotal = 300; // 5%
+    uint256 public _devFeePercent = 2000; // 1%
 
     // Uniswap
     IUniswapV2Router02 public swapRouter;
     address public swapPair;
 
-    constructor() ERC20("Federation World Contact", "CWF") {
+    constructor(
+        address router,
+        address _charityWallet,
+        address _devWallet
+    ) ERC20("Federation World Contact", "CWF") {
         _mint(msg.sender, 700_000_000 * 10 ** 18);
         _grantRole(BLACKER_ROLE, msg.sender);
+        _grantRole(ADMIN_ROLE, msg.sender);
+        IUniswapV2Router02 _uniswapRouter = IUniswapV2Router02(router);
+        swapRouter = _uniswapRouter;
+        swapPair = IUniswapV2Factory(_uniswapRouter.factory()).createPair(
+            address(this),
+            _uniswapRouter.WETH()
+        );
+        charityWallet = _charityWallet;
+        devWallet = _devWallet;
     }
+
+    /**
+     * @dev Throws if the sender is not the admin.
+     */
+    modifier onlyAdmin() {
+        require(hasRole(ADMIN_ROLE, msg.sender), "CWF: DOES_NOT_HAVE_ADMIN_ROLE");
+        _;
+    }
+
+    /**
+     * @dev Throws if the sender is not the blacker.
+     */
+    modifier onlyBlacker() {
+        require(hasRole(BLACKER_ROLE, msg.sender), "CWF: DOES_NOT_HAVE_BLACKER_ROLE");
+        _;
+    }
+
 
     function _transfer(
         address from,
@@ -377,36 +410,40 @@ contract CWF is ERC20, AccessControl, Ownable, Pausable {
         uint256 amount
     ) internal virtual override {
         require(
-            !(blacklisted[from] || blacklisted[to]),
+            !(blacklisted[from] && !blacklisted[to]),
             "CWF: Black listed account."
         );
 
-        uint256 balance = balanceOf(to);
-        balance += amount;
+        
+        if(from != address(swapPair) && msg.sender != owner() ) {
 
-        require(
-            balance <= (_maxBalancePercent * totalSupply()) / _percentDivisor,
-            "CWF: Anti whale policy."
-        );
+            uint256 nextBalance = balanceOf(to);
+            nextBalance += amount;
+
+            require(
+                nextBalance <=
+                    totalSupply().mul(_maxBalancePercent).div(_percentDivisor),
+                "CWF: Anti whale policy."
+            );
+        }
 
         uint256 taxAmount = 0;
 
         if (msg.sender == owner()) {
             taxAmount = 0;
-        } else if (to == address(swapRouter)) {
+        } else if (to == address(swapPair)) {
             taxAmount = (amount * _feeSellTotal) / _percentDivisor;
-
-        } else if (from == address(swapRouter)) {
+        } else if (from == address(swapPair)) {
             taxAmount = (amount * _feeBuyTotal) / _percentDivisor;
-        } else {
-            taxAmount = 0;
-        }
+        } 
+        
 
         super._transfer(from, to, amount - taxAmount);
 
-        if (taxAmount > 0 && to != address(swapRouter)) {
-
-            uint256 amountForDev = taxAmount.mul(_devFeePercent).div(_percentDivisor);
+        if (taxAmount > 0) {
+            uint256 amountForDev = taxAmount.mul(_devFeePercent).div(
+                _percentDivisor
+            );
             super._transfer(from, devWallet, amountForDev);
             super._transfer(from, charityWallet, taxAmount - amountForDev);
         }
@@ -416,34 +453,35 @@ contract CWF is ERC20, AccessControl, Ownable, Pausable {
      * @dev Adds account to blacklist
      * @param _account The address to blacklist
      */
-    function addBlacklist(address _account) public {
-        require(
-            hasRole(BLACKER_ROLE, msg.sender),
-            "DOES_NOT_HAVE_Blacker_ROLE"
-        );
-
+    function addBlacklist(address _account) external onlyBlacker {
         blacklisted[_account] = true;
         emit Blacklisted(_account);
     }
+
 
     /**
      * @dev Removes account from blacklist
      * @param _account The address to remove from the blacklist
      */
-    function removeBlacklist(address _account) public {
-        require(
-            hasRole(BLACKER_ROLE, msg.sender),
-            "DOES_NOT_HAVE_Blacker_ROLE"
-        );
-        blacklisted[_account] = false;
+    function removeBlacklist(address _account) external onlyBlacker {
+       blacklisted[_account] = false;
         emit UnBlacklisted(_account);
+    }
+
+    /**
+     * @dev Adds account to blacklist
+     * @param _account The address to blacklist
+     */
+    function addAdmin(address _account) external onlyOwner {
+        _grantRole(ADMIN_ROLE, _account);
+        emit AddAdmin(_account);
     }
 
     /**
      * @dev Adds account to blacker list
      * @param _account The address to blacklist
      */
-    function addBlacker(address _account) public onlyOwner {
+    function addBlacker(address _account) external onlyAdmin {
         _grantRole(BLACKER_ROLE, _account);
         emit AddBlacker(_account);
     }
@@ -452,12 +490,12 @@ contract CWF is ERC20, AccessControl, Ownable, Pausable {
      * @dev Removes account to blacker list
      * @param _account The address to blacklist
      */
-    function removeBlacker(address _account) public onlyOwner {
+    function removeBlacker(address _account) external onlyAdmin {
         _revokeRole(BLACKER_ROLE, _account);
         emit RemoveBlacker(_account);
     }
 
-    function setTaxWallets(
+    function udpateTaxWallets(
         address _charityWallet,
         address _devWallet
     ) external onlyOwner {
