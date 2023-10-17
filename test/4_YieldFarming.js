@@ -1,6 +1,5 @@
 const { mineUpTo } = require("@nomicfoundation/hardhat-network-helpers");
 const { expect } = require("chai");
-const { constants } = require("ethers");
 const { ethers } = require("hardhat");
 require("dotenv").config();
 
