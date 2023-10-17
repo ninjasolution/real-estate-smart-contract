@@ -24,8 +24,6 @@ contract LinearVesting is ILinearVesting, ReentrancyGuard {
     uint256 public duration;
     // total amount of tokens to be released at the end of the vesting
     uint256 public amountTotal;
-    // percent for each second
-    uint256 public perentPerSecond;
     // amount of tokens released
     uint256 public totalReleased;
 
@@ -49,8 +47,7 @@ contract LinearVesting is ILinearVesting, ReentrancyGuard {
     mapping(address => bool) public initialCliamed;
     mapping(string => mapping(address => ReleaseSchedule))
         public releaseScheduleByTag;
-    uint64 public percentDivisor = 100000;
-    bytes32 public rootHash;
+    uint64 public percentDivisor = 100000; // 1% = 1000
 
     /**
      * @dev Throws if called by any account other than the owner.
@@ -87,12 +84,12 @@ contract LinearVesting is ILinearVesting, ReentrancyGuard {
         uint256 amountPerPaymentToken,
         uint256 refundFee
     ) external override {
-        // releaseScheduleByTag[tagId][account] = ReleaseSchedule(
-        //     amount,
-        //     paymentToken,
-        //     amountPerPaymentToken,
-        //     refundFee
-        // );
+        releaseScheduleByTag[tagId][account] = ReleaseSchedule(
+            amount,
+            paymentToken,
+            amountPerPaymentToken,
+            refundFee
+        );
     }
 
     /**
@@ -124,21 +121,12 @@ contract LinearVesting is ILinearVesting, ReentrancyGuard {
             vestingSetup.duration >= vestingSetup.cliff,
             "TokenVesting: duration must be >= cliff"
         );
-        uint256 lockAmount = contractSetup.totalTokenOnSale.sub(
-            contractSetup
-                .totalTokenOnSale
-                .mul(vestingSetup.initialUnlockPercent)
-                .div(percentDivisor)
-        );
 
         cliff = vestingSetup.cliff;
         initialUnlockPercent = vestingSetup.initialUnlockPercent; //20%
         start = vestingSetup.startTime;
         duration = vestingSetup.duration;
         amountTotal = contractSetup.totalTokenOnSale;
-        perentPerSecond = lockAmount.div(
-            vestingSetup.duration - vestingSetup.cliff
-        );
         totalReleased = 0;
     }
 
@@ -169,14 +157,6 @@ contract LinearVesting is ILinearVesting, ReentrancyGuard {
          * @dev Replaced owner() with msg.sender => address of WITHDRAWER_ROLE
          */
         IERC20(token).transfer(msg.sender, amount);
-    }
-
-    /**
-     * @dev update the hash for the merkle proof
-     * @param _hash merkle proof
-     */
-    function updateHash(bytes32 _hash) public onlyOwner {
-        rootHash = _hash;
     }
 
     /**
@@ -233,35 +213,21 @@ contract LinearVesting is ILinearVesting, ReentrancyGuard {
         // Retrieve the current time.
         uint256 currentTime = getCurrentTime();
         ReleaseSchedule memory schedule = releaseScheduleByTag[tagId][account];
-        uint256 totalAmount = schedule
-            .amount
-            .mul(
-                10 **
-                    (IERC20Metadata(address(_token)).decimals() -
-                        IERC20Metadata(schedule.paymentToken).decimals())
-            )
+        uint256 totalAmount = schedule.amount
+            .mul(10 ** (IERC20Metadata(address(_token)).decimals() - IERC20Metadata(schedule.paymentToken).decimals()))
             .mul(schedule.amountPerPaymentToken);
 
         // If the current time is after the vesting period, all tokens are releasable,
         // minus the amount already released.
-        if (currentTime <= start + cliff) {
-            return
-                totalAmount.mul(initialUnlockPercent).div(
-                    percentDivisor
-                );
-        } else if (
-            currentTime >= start + duration
-        ) {
+        if (currentTime <= start.add(cliff)) {
+            return totalAmount.mul(initialUnlockPercent).div(percentDivisor);
+        } else if (currentTime >= start.add(duration)) {
             return amountTotal;
         } else {
-            uint256 claimableDuration = currentTime -
-                start -
-                cliff;
+            uint256 claimableDuration = currentTime.sub(start + cliff);
             // Subtract the amount already released and return.
-            return
-                claimableDuration
-                    .mul(perentPerSecond.mul(totalAmount))
-                    .div(percentDivisor);
+            uint256 amountPerSecond = totalAmount.div(duration - cliff);
+            return claimableDuration.mul(amountPerSecond);
         }
     }
 

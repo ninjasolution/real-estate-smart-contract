@@ -16,15 +16,6 @@ interface IPresaleWritableInternal {
         uint256 presaleTokenPerPaymentToken;
     }
 
-    struct BuyPermission {
-        // permit2 signature to transfer tokens from the buyer to the treasury wallet
-        bytes signature;
-        // deadline on the permit signature
-        uint256 deadline;
-        // a unique value for every token owner's signature to prevent signature replays
-        uint256 nonce;
-    }
-
     event AllocationReserved(
         string indexed tagId,
         address indexed buyer,

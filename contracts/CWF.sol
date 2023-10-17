@@ -339,9 +339,11 @@ contract CWF is ERC20, AccessControl, Ownable, Pausable {
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     mapping(address => bool) public blacklisted;
+    mapping(address => bool) public whitelisted;
 
     event Blacklisted(address indexed _account);
     event UnBlacklisted(address indexed _account);
+    event Whitelisted(address indexed _account);
     event AddAdmin(address indexed _account);
     event RemoveAdmin(address indexed _account);
     event AddBlacker(address indexed _account);
@@ -391,7 +393,10 @@ contract CWF is ERC20, AccessControl, Ownable, Pausable {
      * @dev Throws if the sender is not the admin.
      */
     modifier onlyAdmin() {
-        require(hasRole(ADMIN_ROLE, msg.sender), "CWF: DOES_NOT_HAVE_ADMIN_ROLE");
+        require(
+            hasRole(ADMIN_ROLE, msg.sender),
+            "CWF: DOES_NOT_HAVE_ADMIN_ROLE"
+        );
         _;
     }
 
@@ -399,10 +404,12 @@ contract CWF is ERC20, AccessControl, Ownable, Pausable {
      * @dev Throws if the sender is not the blacker.
      */
     modifier onlyBlacker() {
-        require(hasRole(BLACKER_ROLE, msg.sender), "CWF: DOES_NOT_HAVE_BLACKER_ROLE");
+        require(
+            hasRole(BLACKER_ROLE, msg.sender),
+            "CWF: DOES_NOT_HAVE_BLACKER_ROLE"
+        );
         _;
     }
-
 
     function _transfer(
         address from,
@@ -414,12 +421,9 @@ contract CWF is ERC20, AccessControl, Ownable, Pausable {
             "CWF: Black listed account."
         );
 
-        
-        if(from != address(swapPair) && msg.sender != owner() ) {
-
+        if (!whitelisted[to] && from != address(swapPair) && to != owner()) {
             uint256 nextBalance = balanceOf(to);
             nextBalance += amount;
-
             require(
                 nextBalance <=
                     totalSupply().mul(_maxBalancePercent).div(_percentDivisor),
@@ -435,8 +439,7 @@ contract CWF is ERC20, AccessControl, Ownable, Pausable {
             taxAmount = (amount * _feeSellTotal) / _percentDivisor;
         } else if (from == address(swapPair)) {
             taxAmount = (amount * _feeBuyTotal) / _percentDivisor;
-        } 
-        
+        }
 
         super._transfer(from, to, amount - taxAmount);
 
@@ -453,18 +456,26 @@ contract CWF is ERC20, AccessControl, Ownable, Pausable {
      * @dev Adds account to blacklist
      * @param _account The address to blacklist
      */
+    function addWhitelist(address _account) external onlyAdmin {
+        whitelisted[_account] = true;
+        emit Whitelisted(_account);
+    }
+
+    /**
+     * @dev Adds account to blacklist
+     * @param _account The address to blacklist
+     */
     function addBlacklist(address _account) external onlyBlacker {
         blacklisted[_account] = true;
         emit Blacklisted(_account);
     }
-
 
     /**
      * @dev Removes account from blacklist
      * @param _account The address to remove from the blacklist
      */
     function removeBlacklist(address _account) external onlyBlacker {
-       blacklisted[_account] = false;
+        blacklisted[_account] = false;
         emit UnBlacklisted(_account);
     }
 

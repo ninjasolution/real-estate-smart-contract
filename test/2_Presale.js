@@ -45,11 +45,9 @@ describe("Presale", function () {
     vesting = await Vesting.deploy(deployer.address, "CWF Vesting")
     await vesting.deployed()
 
-
     presaleSetup = {
-      vestingContract: paymentToken.address,
+      vestingContract: vesting.address,
       paymentToken: paymentToken.address,
-      permit2: paymentToken.address, // bsc
       grandTotal: eth(100),
       summedMaxTagCap: eth(1000),
       refundFeeDecimals: 4
@@ -67,10 +65,10 @@ describe("Presale", function () {
     let timestamp = await time.latest();
 
     vestingSetup = {
-      startTime: timestamp + 10000,
-      cliff: 10000,
-      duration: 50000,
-      initialUnlockPercent: 10
+      startTime: timestamp + 1,
+      cliff: 10,
+      duration: 50,
+      initialUnlockPercent: 1000 // 1%
     };
 
     let name = "test-00";
@@ -171,12 +169,12 @@ describe("Presale", function () {
       await presale.openPresale();
       await presale.openTag(allocations[0].tagId);
 
-      console.log(allocations[0], "-----", amount)
       await paymentToken.approve(presale.address, amount)
       await presale.reserveAllocation(amount, allocations[0])
 
+      await cwfToken.addWhitelist(vesting.address);
       // console.log(ethers.utils.formatEther(await vesting.computeReleasableAmount(allocations[0].tagId, deployer.address)))
-      // await vesting.claim(allocations[0].tagId)
+      await vesting.claim(allocations[0].tagId)
 
     })
 
