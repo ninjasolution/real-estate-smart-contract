@@ -9,12 +9,8 @@ import "hardhat/console.sol";
 
 
 contract PaymentToken is ERC20, Ownable {
-
-    
-
     constructor() ERC20("Payment Token", "PTC") {
         _mint(msg.sender, (700_000_000 * 10 ** 18));
 
     }
-
 }

@@ -23,12 +23,12 @@ describe("Yield Farming", function () {
   async function deploy() {
     const [_deployer, _fund, _target] = await ethers.getSigners();
 
-    const LPToken = await ethers.getContractFactory("Token")
-    const _lpToken = await LPToken.deploy("LPToken Token", "LP", 1000000)
+    const LPToken = await ethers.getContractFactory("PaymentToken")
+    const _lpToken = await LPToken.deploy()
     await _lpToken.deployed()
 
-    const RewardToken = await ethers.getContractFactory("Token")
-    const _rewardToken = await RewardToken.deploy("Reward Token", "RT", 1000000)
+    const RewardToken = await ethers.getContractFactory("PaymentToken")
+    const _rewardToken = await RewardToken.deploy()
     await _rewardToken.deployed()
 
     const Farming = await ethers.getContractFactory("YieldFarming")
