@@ -8,9 +8,6 @@ function eth(amount) {
   return ethers.utils.parseEther(amount.toString())
 }
 
-function _token(amount) {
-  return (amount * 100).toString()
-}
 
 describe("Yield Farming", function () {
 

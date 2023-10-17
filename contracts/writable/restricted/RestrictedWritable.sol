@@ -98,14 +98,6 @@ contract RestrictedWritable is
             .PAUSED;
     }
 
-    function updateTagMerkleRoot(
-        string calldata tagId,
-        bytes32 merkleRoot
-    ) external override onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(merkleRoot != bytes32(0), "MerkleRoot_EMPTY");
-        PresaleStorage.layout().tags.data[tagId].merkleRoot = merkleRoot;
-    }
-
     function updateTagStartDate(
         string calldata tagId,
         uint128 startAt

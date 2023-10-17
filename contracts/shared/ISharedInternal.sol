@@ -12,7 +12,6 @@ interface ISharedInternal {
     struct Tag {
         Status status;
         // contains wallet and allocation per wallet
-        bytes32 merkleRoot;
         uint128 startAt;
         uint128 endAt;
         uint256 maxTagCap;

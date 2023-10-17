@@ -87,12 +87,12 @@ contract LinearVesting is ILinearVesting, ReentrancyGuard {
         uint256 amountPerPaymentToken,
         uint256 refundFee
     ) external override {
-        releaseScheduleByTag[tagId][account] = ReleaseSchedule(
-            amount,
-            paymentToken,
-            amountPerPaymentToken,
-            refundFee
-        );
+        // releaseScheduleByTag[tagId][account] = ReleaseSchedule(
+        //     amount,
+        //     paymentToken,
+        //     amountPerPaymentToken,
+        //     refundFee
+        // );
     }
 
     /**

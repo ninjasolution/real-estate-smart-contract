@@ -63,7 +63,6 @@ contract RestrictedWritableInternal is IRestrictedWritableInternal {
         ISharedInternal.Tag calldata tag_
     ) internal view returns (bool) {
         return
-            tag_.merkleRoot != bytes32(0) &&
             tag_.startAt >= block.timestamp &&
             tag_.endAt > block.timestamp &&
             tag_.maxTagCap > 0;

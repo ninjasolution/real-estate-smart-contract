@@ -37,11 +37,6 @@ interface IRestrictedWritable {
 
     function pauseTag(string calldata tagId) external;
 
-    function updateTagMerkleRoot(
-        string calldata tagId,
-        bytes32 merkleRoot
-    ) external;
-
     function updateTagStartDate(
         string calldata tagId,
         uint128 startAt
