@@ -363,8 +363,8 @@ contract CWF is ERC20, AccessControl, Ownable, Pausable {
 
     // Tax System
     uint256 public maxTaxFee = 1000; // 10%
-    uint256 public _feeBuyTotal = 500; // 5%
-    uint256 public _feeSellTotal = 500; // 5%
+    uint256 public _feeBuyTotal = 200; // 2%
+    uint256 public _feeSellTotal = 300; // 3%
     uint256 public _devFeePercent = 2000; // 1%
 
     // Uniswap
