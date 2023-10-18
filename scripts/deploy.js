@@ -6,10 +6,6 @@
 // global scope, and execute the script.
 const { ethers } = require("hardhat");
 
-function eth(amount) {
-  return ethers.utils.parseEther(amount.toString())
-}
-
 async function main() {
 
   let router = "0x10ED43C718714eb63d5aA57B78B54704E256024E"; // bsc main
