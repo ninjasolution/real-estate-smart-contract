@@ -12,8 +12,8 @@ function eth(amount) {
 
 async function main() {
 
-  // let router = "0x10ED43C718714eb63d5aA57B78B54704E256024E"; // bsc main
-  let router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"; // bsc main
+  let router = "0x10ED43C718714eb63d5aA57B78B54704E256024E"; // bsc main
+  // let router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"; // goerli
   let vault = "0xe8de46e6df55dE3dDF44fd022376522812aa8A68";
   let dev = "0xa415D52dd2bf10e2406e9e75a7F411EFCf025e64";
   let deployer = "0x7B7887059860a1A21f3C62542B6CE5c0a23c76d5";
