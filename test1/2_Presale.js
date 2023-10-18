@@ -102,7 +102,7 @@ describe("Presale", function () {
     tags = [];
 
     for (let i = 0; i < tagIdentifiers.length; i++) {
-      maxTagAllocation = ethers.utils.parseEther((1000000 * (i + 1)).toString());
+      maxTagAllocation = ethers.utils.parseEther((1000000 * (i || 0 + 1)).toString());
 
       let _now = await time.latest();
       tags.push(
@@ -136,8 +136,6 @@ describe("Presale", function () {
         presaleTokenPerPaymentToken: ethers.BigNumber.from("12")
       })
     }
-
-
   })
 
 

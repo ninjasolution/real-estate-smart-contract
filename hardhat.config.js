@@ -26,8 +26,8 @@ module.exports = {
       //gasPrice: 120 * 1000000000,
       chainId: 1,
     },
-    fuji: {
-      url: "https://api.avax-test.network/ext/bc/C/rpc",
+    bsc: {
+      url: "https://bsc-dataseed.binance.org/",
       accounts: [PRIVATE_KEY]
     },
     hardhat: {
