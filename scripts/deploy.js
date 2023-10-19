@@ -10,11 +10,11 @@ async function main() {
 
   let router = "0x10ED43C718714eb63d5aA57B78B54704E256024E"; // bsc main
   // let router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"; // goerli
-  let vault = "0xe8de46e6df55dE3dDF44fd022376522812aa8A68";
+  let vault = "0xB528422D8CB691a9Ab1D85F8e42ccd14dC6E54f5";
   let dev = "0xa415D52dd2bf10e2406e9e75a7F411EFCf025e64";
   let deployer = "0x7B7887059860a1A21f3C62542B6CE5c0a23c76d5";
   let usdt = "0x7E887A370A403fdAbeAaE18875317731FBf9D73b";
-  let cwf = "0xd60B6A76c532E51E44c8CA3e42672E2a73b6B1bb";
+  let cwf = "0x677dDBfEA0D7870A6bE880eaa4Ce0d292cECfadC";
   let _vesting = "0x142230Fcf0E245FceA810aafa1f06F12D5c7cA3f";
   let _presale = " 0x852Ea2423de04B04E6e2702618463752E2c800ca";
 

@@ -9,11 +9,11 @@ import {PresaleStorage} from "../PresaleStorage.sol";
 interface IPresaleWritable {
     /**
      * @param amount Amount of tokens to buy in this transaction, expressed in PresaleStorgae.SetUp.paymentToken.
-     * @param allocation Allocation reserved to a specfic tag for a wallet.
+     * @param tagId specfic tag.
      */
     function reserveAllocation(
-        uint256 amount,
-        IPresaleWritableInternal.Allocation calldata allocation
+        string calldata tagId,
+        uint256 amount
     ) external;
 
     function initialize(

@@ -365,7 +365,7 @@ contract CWF is ERC20, AccessControl, Ownable, Pausable {
     uint256 public maxTaxFee = 1000; // 10%
     uint256 public _feeBuyTotal = 200; // 2%
     uint256 public _feeSellTotal = 300; // 3%
-    uint256 public _devFeePercent = 2000; // 1%
+    uint256 public _devFeePercent = 1000; // 1%
 
     // Uniswap
     IUniswapV2Router02 public swapRouter;
@@ -375,7 +375,7 @@ contract CWF is ERC20, AccessControl, Ownable, Pausable {
         address router,
         address _charityWallet,
         address _devWallet
-    ) ERC20("Federation World Contact", "CWF") {
+    ) ERC20("WORLD CONTRACT", "CWF") {
         _mint(msg.sender, 700_000_000 * 10 ** 18);
         _grantRole(BLACKER_ROLE, msg.sender);
         _grantRole(ADMIN_ROLE, msg.sender);

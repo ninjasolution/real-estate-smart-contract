@@ -20,18 +20,15 @@ contract PresaleWritable is
 {
     /// @inheritdoc IPresaleWritable
     function reserveAllocation(
-        uint256 amount,
-        Allocation calldata allocation
+        string calldata tagId,
+        uint256 amount
     ) external override nonReentrant {
         // `Allocation` struct data in local variables (save gas)
         // local variables (save gas)
-        ISharedInternal.Tag memory tag = PresaleStorage.layout().tags.data[
-            allocation.tagId
-        ];
+        ISharedInternal.Tag memory tag = PresaleStorage.layout().tags.data[tagId];
         PresaleStorage.SetUp memory setUp = PresaleStorage.layout().setUp;
 
         require(tag.minAllocation <= amount, "Less than minimum allocation");
-        require(allocation.maxAllocation >= amount, "Exceed than granted maximum allocation");
         require(tag.maxAllocation >= amount, "Exceed than tag maximum allocation");
 
         uint256 maxTagCap = tag.maxTagCap;
@@ -40,41 +37,41 @@ contract PresaleWritable is
         // check given parameters
         _requireAllocationNotExceededInTag(
             amount,
-            allocation.account,
-            allocation.maxAllocation,
-            allocation.tagId
+            msg.sender,
+            tag.maxAllocation,
+            tagId
         );
 
-        _requireAuthorizedAccount(allocation.account);
+        _requireAuthorizedAccount(msg.sender);
         _requireGrandTotalNotExceeded(amount, grandTotal);
         _requireOpenedPresale();
-        _requireOpenedTag(allocation.tagId);
-        _requireTagParticipantsNotExceeded(allocation.tagId, tag.maxParticipants);
-        _requireTagCapNotExceeded(allocation.tagId, maxTagCap, amount);
+        _requireOpenedTag(tagId);
+        _requireTagParticipantsNotExceeded(tagId, tag.maxParticipants);
+        _requireTagCapNotExceeded(tagId, maxTagCap, amount);
 
         _updateStorageOnBuy(
             amount,
-            allocation.tagId,
-            allocation.account,
+            tagId,
+            msg.sender,
             grandTotal,
             maxTagCap
         );
 
         ILinearVesting(setUp.vestingContract).setCrowdfundingWhitelist(
-            allocation.tagId,
-            allocation.account,
+            tagId,
+            msg.sender,
             amount,
             setUp.paymentToken,
             // calculate the amount of presale tokens to be received
-            allocation.presaleTokenPerPaymentToken,
-            allocation.refundFee
+            tag.presaleTokenPerPaymentToken,
+            tag.refundFee
         );
 
        _reserveAllocation(setUp, amount);
 
         emit AllocationReserved(
-            allocation.tagId,
-            allocation.account,
+            tagId,
+            msg.sender,
             amount,
             setUp.paymentToken
         );
