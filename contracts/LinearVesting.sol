@@ -160,8 +160,8 @@ contract LinearVesting is ILinearVesting, ReentrancyGuard {
     }
 
     /**
-     * @notice Withdraw the specified amount if possible.
-     * @param tagId the amount to withdraw
+     * @notice Refund the specified amount if possible.
+     * @param amount the amount to refund
      */
     function refund(
         string calldata tagId,
@@ -169,10 +169,10 @@ contract LinearVesting is ILinearVesting, ReentrancyGuard {
     ) external nonReentrant {
 
         uint256 currentTime = getCurrentTime();
-        require(currentTime <= start, "LinearVesting: Presale is finished.");
-        
+        require(currentTime <= start + duration, "LinearVesting: Presale is finished.");
+
         ReleaseSchedule storage schedule = releaseScheduleByTag[tagId][msg.sender];
-        uint256 refundAmount = amount.mul(percentDivisor - schedule.refundFee);
+        uint256 refundAmount = amount.mul(percentDivisor - schedule.refundFee).div(percentDivisor);
         IERC20(schedule.paymentToken).transfer(msg.sender, refundAmount);
         schedule.amount = schedule.amount.sub(amount);
     }

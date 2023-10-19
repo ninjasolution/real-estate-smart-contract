@@ -97,7 +97,7 @@ describe("Presale", function () {
     await deploy();
 
     let lastStart = 60;
-    let lastEnd = 3600;
+    let lastEnd = 3600*10;
     let maxTagAllocation = eth(1_000_000);
     tags = [];
 
@@ -108,6 +108,8 @@ describe("Presale", function () {
       tags.push(
         {
           status: 0,
+          presaleTokenPerPaymentToken: 12,
+          refundFee: 10000,
           startAt: _now + lastStart,
           endAt: _now + lastEnd,
           maxTagCap: maxTagAllocation,
@@ -160,15 +162,17 @@ describe("Presale", function () {
     it('Reserve Allocation', async () => {
 
       let amount = ethers.utils.parseEther("1000");
+      let refundAmount = ethers.utils.parseEther("900");
 
       await presale.openPresale();
       await presale.openTag(allocations[0].tagId);
 
       await paymentToken.approve(presale.address, amount)
-      await presale.reserveAllocation(amount, allocations[0])
+      await presale.reserveAllocation(allocations[0].tagId, amount)
 
       await cwfToken.addWhitelist(vesting.address);
       // console.log(ethers.utils.formatEther(await vesting.computeReleasableAmount(allocations[0].tagId, deployer.address)))
+      await vesting.refund(allocations[0].tagId, refundAmount)
       await vesting.claim(allocations[0].tagId)
 
     })
