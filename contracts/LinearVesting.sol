@@ -59,12 +59,9 @@ contract LinearVesting is ILinearVesting, ReentrancyGuard {
 
     /**
      * @dev Creates a vesting contract.
-     * @param owner_ address of the contract
-     * @param name_ name of the contract
      */
-    constructor(address owner_, string memory name_) {
-        _transferOwnership(owner_);
-        name = name_;
+    constructor() {
+        _transferOwnership(msg.sender);
     }
 
     /**

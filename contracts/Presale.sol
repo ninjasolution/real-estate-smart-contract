@@ -7,7 +7,7 @@ import {PresaleReadable} from "./readable/PresaleReadable.sol";
 import {PresaleWritable} from "./writable/PresaleWritable.sol";
 
 contract Presale is PresaleReadable, PresaleWritable {
-    constructor(address owner) {
-        _grantRole(DEFAULT_ADMIN_ROLE, owner);
+    constructor() {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 }

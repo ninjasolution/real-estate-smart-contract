@@ -4,18 +4,6 @@ pragma solidity ^0.8.17;
 import {ISharedInternal} from "../shared/ISharedInternal.sol";
 
 interface IPresaleWritableInternal {
-    struct Allocation {
-        string tagId;
-        address account;
-        // maximum amount the user can spend, expressed in PresaleStruct.SetUp.paymentToken
-        uint256 maxAllocation;
-        // take PresaleStorage.PresaleStruct.SetUp.refundFeeDecimals into account
-        uint256 refundFee;
-        // price per token of the project behind the Presale, expressed in
-        // `PresaleSTorage.SetUp.paymentToken` (any ERC20)
-        uint256 presaleTokenPerPaymentToken;
-    }
-
     event AllocationReserved(
         string indexed tagId,
         address indexed buyer,
