@@ -19,8 +19,8 @@ async function main() {
   let deployer = "0x7B7887059860a1A21f3C62542B6CE5c0a23c76d5";
   let usdt = "0x7E887A370A403fdAbeAaE18875317731FBf9D73b";
   let cwf = "0xcff348c30F988CB3b6A2068b2e51Aa48E65025D3";
-  let _presale = " 0xCbE5F95c5871A95D83D032da64895DF30B9c1203";
-  let _vesting = "0x31D9319187511595a7A55dc89e87E479C4F33482";
+  let _presale = " 0x819992484d2CC3323d0fbe54223Dab0fCD153ED2";
+  let _vesting = "0xC7bb9902aaF5056d3944B3313951a8494C05feA3";
 
   /* Tokens */
   const CWF = await hre.ethers.getContractFactory("CWF");
@@ -30,20 +30,22 @@ async function main() {
 
   /* Presale */
   const Presale = await hre.ethers.getContractFactory("Presale");
-  const presale = await Presale.deploy(deployer)
-  // const presale = await Presale.attach(_presale);
+  // const presale = await Presale.deploy(deployer)
+  const presale = await Presale.attach(_presale);
   console.log("Presale to:", presale.address);
 
   /* Vesting */
   const Vesting = await hre.ethers.getContractFactory("LinearVesting");
-  const vesting = await Vesting.deploy(deployer, "CWF Vesting")
-  // const vesting = await Vesting.attach(_vesting)
+  // const vesting = await Vesting.deploy(deployer, "CWF Vesting")
+  const vesting = await Vesting.attach(_vesting)
   console.log("Vesting to:", vesting.address);
 
 
   let tagIds = ["Private", "Seed", "Community"]
-
   let tags = []
+  let block = await ethers.provider.getBlock("latest")
+  let timestamp = block.timestamp;
+
   for(let i=0 ; i<tagIds.length ; i++) {
     tags.push({
       status: 0,
@@ -76,8 +78,6 @@ async function main() {
     gracePeriod: 60,
     decimals: 18
   }
-  let block = await ethers.provider.getBlock("latest")
-  let timestamp = block.timestamp;
 
   let vestingSetup = {
     startTime: timestamp + 100,
@@ -87,7 +87,7 @@ async function main() {
   };
 
 
-  await presale.initialize(deployer, presaleSetup, tagIds, tags);
+  // await presale.initialize(deployer, presaleSetup, tagIds, tags);
   console.log("00000")
   await vesting.initializeCrowdfunding(
     contractSetup,
