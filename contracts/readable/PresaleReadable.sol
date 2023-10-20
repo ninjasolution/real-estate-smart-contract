@@ -42,7 +42,9 @@ contract PresaleReadable is
             address paymentToken,
             uint256 grandTotal,
             uint256 summedMaxTagCap,
-            uint256 refundFeeDecimals
+            uint256 minAllocation,
+            uint256 maxAllocation,
+            uint256 refundFee
         )
     {
         PresaleStorage.SetUp memory setUp_ = PresaleStorage.layout().setUp;
@@ -50,7 +52,9 @@ contract PresaleReadable is
         paymentToken = setUp_.paymentToken;
         grandTotal = setUp_.grandTotal;
         summedMaxTagCap = setUp_.summedMaxTagCap;
-        refundFeeDecimals = setUp_.refundFeeDecimals;
+        minAllocation = setUp_.minAllocation;
+        maxAllocation = setUp_.maxAllocation;
+        refundFee = setUp_.refundFee;
     }
 
     function tag(

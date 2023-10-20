@@ -28,8 +28,8 @@ contract PresaleWritable is
         ISharedInternal.Tag memory tag = PresaleStorage.layout().tags.data[tagId];
         PresaleStorage.SetUp memory setUp = PresaleStorage.layout().setUp;
 
-        require(tag.minAllocation <= amount, "Less than minimum allocation");
-        require(tag.maxAllocation >= amount, "Exceed than tag maximum allocation");
+        require(setUp.minAllocation <= amount, "Less than minimum allocation");
+        require(setUp.maxAllocation >= amount, "Exceed than tag maximum allocation");
 
         uint256 maxTagCap = tag.maxTagCap;
         uint256 grandTotal = setUp.grandTotal;
@@ -38,7 +38,7 @@ contract PresaleWritable is
         _requireAllocationNotExceededInTag(
             amount,
             msg.sender,
-            tag.maxAllocation,
+            setUp.maxAllocation,
             tagId
         );
 
@@ -64,7 +64,7 @@ contract PresaleWritable is
             setUp.paymentToken,
             // calculate the amount of presale tokens to be received
             tag.presaleTokenPerPaymentToken,
-            tag.refundFee
+            setUp.refundFee
         );
 
        _reserveAllocation(setUp, amount);

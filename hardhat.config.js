@@ -11,10 +11,10 @@ const infraKey = process.env.INFRA_KEY
 
 function getRemappings() {
   return fs
-      .readFileSync('remappings.txt', 'utf8')
-      .split('\n')
-      .filter(Boolean)
-      .map((line) => line.trim().split('='));
+    .readFileSync('remappings.txt', 'utf8')
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => line.trim().split('='));
 }
 
 module.exports = {
@@ -32,11 +32,15 @@ module.exports = {
     },
     hardhat: {
       allowUnlimitedContractSize: true,
-      chainId: 31337
+      chainId: 31337,
+      gasPrice: 20000000000,
+      gas: 6000000,
     },
     goerli: {
       url: `https://goerli.infura.io/v3/${infraKey}`,
       accounts: [PRIVATE_KEY],
+      // gas: 2100000,
+      // gasPrice: 8000000000
     },
     localhost: {
       live: false,

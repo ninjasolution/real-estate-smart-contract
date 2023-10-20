@@ -25,7 +25,9 @@ interface IPresaleReadable {
             address paymentToken,
             uint256 grandTotal,
             uint256 summedMaxTagCap,
-            uint256 refundFeeDecimals
+            uint256 minAllocation,
+            uint256 maxAllocation,
+            uint256 refundFee
         );
 
     function tag(

@@ -13,7 +13,9 @@ library PresaleStorage {
         // sum of maxTagCap OF all existing tags, can be lower than
         // `grandTotal` and maximum equal to `grandTotal`
         uint256 summedMaxTagCap;
-        uint256 refundFeeDecimals;
+        uint256 minAllocation;
+        uint256 maxAllocation;
+        uint256 refundFee;
     }
 
     // Updated by owner and users interactions

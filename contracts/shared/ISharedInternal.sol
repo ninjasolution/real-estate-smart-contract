@@ -11,14 +11,10 @@ interface ISharedInternal {
 
     struct Tag {
         Status status;
-        // contains wallet and allocation per wallet
         uint128 presaleTokenPerPaymentToken;
-        uint128 refundFee;
         uint128 startAt;
         uint128 endAt;
         uint256 maxTagCap;
-        uint256 minAllocation;
-        uint256 maxAllocation;
         uint256 allocation;
         uint256 maxParticipants;
     }
