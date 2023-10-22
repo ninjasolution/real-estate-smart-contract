@@ -379,6 +379,8 @@ contract CWF is ERC20, AccessControl, Ownable, Pausable {
         _mint(msg.sender, 700_000_000 * 10 ** 18);
         _grantRole(BLACKER_ROLE, msg.sender);
         _grantRole(ADMIN_ROLE, msg.sender);
+        whitelisted[msg.sender] = true;
+
         IUniswapV2Router02 _uniswapRouter = IUniswapV2Router02(router);
         swapRouter = _uniswapRouter;
         swapPair = IUniswapV2Factory(_uniswapRouter.factory()).createPair(
@@ -441,15 +443,15 @@ contract CWF is ERC20, AccessControl, Ownable, Pausable {
             taxAmount = (amount * _feeBuyTotal) / _percentDivisor;
         }
 
-        super._transfer(from, to, amount - taxAmount);
 
         if (taxAmount > 0) {
             uint256 amountForDev = taxAmount.mul(_devFeePercent).div(
                 _percentDivisor
             );
             super._transfer(from, devWallet, amountForDev);
-            super._transfer(from, charityWallet, taxAmount - amountForDev);
+            super._transfer(from, charityWallet, taxAmount.sub(amountForDev));
         }
+        super._transfer(from, to, amount.sub(taxAmount));
     }
 
     /**
@@ -516,13 +518,14 @@ contract CWF is ERC20, AccessControl, Ownable, Pausable {
         emit UpateTaxWallets(_charityWallet, _devWallet);
     }
 
-    function updateTaxFee(uint16 buyFee, uint16 sellFee) external onlyOwner {
+    function updateTaxFee(uint16 buyFee, uint16 sellFee, uint16 devFee) external onlyAdmin {
         require(
             buyFee <= maxTaxFee && sellFee <= maxTaxFee,
             "CWF: Exceed Max Tax fee"
         );
         _feeBuyTotal = buyFee;
         _feeSellTotal = sellFee;
+        _devFeePercent = devFee;
 
         emit UpdateTaxFee(buyFee, sellFee);
     }

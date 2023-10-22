@@ -63,7 +63,7 @@ contract PresaleWritable is
             amount,
             setUp.paymentToken,
             // calculate the amount of presale tokens to be received
-            tag.presaleTokenPerPaymentToken,
+            tag.price,
             setUp.refundFee
         );
 

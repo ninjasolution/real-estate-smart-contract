@@ -22,6 +22,5 @@ interface ILinearVesting {
 
     function initializeCrowdfunding(ContractSetup memory contractSetup, VestingSetup memory vestingSetup) external;
     function setCrowdfundingWhitelist(string memory tagId, address account, uint256 amount, address paymentToken, uint256 amount1, uint256 refundFee) external;
-    function transferOwnership(address newOwner) external;
     function getToken() external view returns (address);
 }

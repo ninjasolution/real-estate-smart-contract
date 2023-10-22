@@ -6,7 +6,7 @@ require("@onmychain/hardhat-uniswap-v2-deploy-plugin");
 require('dotenv').config();
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY
-const etherscanKey = process.env.ETHERSCAN_KEY
+const etherscanKey = process.env.BSSCAN_KEY
 const infraKey = process.env.INFRA_KEY
 
 function getRemappings() {

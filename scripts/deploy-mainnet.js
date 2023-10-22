@@ -17,10 +17,10 @@ async function main() {
   let vault = "0xB528422D8CB691a9Ab1D85F8e42ccd14dC6E54f5";
   let dev = "0xa415D52dd2bf10e2406e9e75a7F411EFCf025e64";
   let deployer = "0x7B7887059860a1A21f3C62542B6CE5c0a23c76d5";
-  let usdt = "0x7E887A370A403fdAbeAaE18875317731FBf9D73b";
-  let cwf = "0xd60B6A76c532E51E44c8CA3e42672E2a73b6B1bb";
-  let _presale = "0x6c93711f79F65A7AFE4478258F8B5cE2CEC87b43";
-  let _vesting = "0x48149d0f8e5cd465b629A1de183766c87Bec2a2A";
+  let usdt = "0x55d398326f99059fF775485246999027B3197955";
+  let cwf = "0x677dDBfEA0D7870A6bE880eaa4Ce0d292cECfadC";
+  let _presale = "0x66751837c9F9e649d3Ce6b08cE511446FE6aFe67";
+  let _vesting = "0xDF284E8483190E7A4E1D0fc5f1D2b30e7D67A5c4";
 
   /* Tokens */
   const CWF = await hre.ethers.getContractFactory("CWF");
@@ -41,12 +41,13 @@ async function main() {
   console.log("Vesting to:", vesting.address);
 
   let tagIds = ["Private", "Seed", "Community"]
+  // let tagIds = ["Private"]
   let prices = [1900, 1950, 2000] // [0.19, 0.195, 0.20]
   let allocations = [20000000, 60000000, 200000000]
   let tags = []
   let block = await ethers.provider.getBlock("latest")
   let timestamp = block.timestamp;
-  timestamp = Number.parseInt(timestamp) + 3600
+  timestamp = Number.parseInt(timestamp) + 3600*24
   let grandTotal = 0;
   for (let i = 0; i < tagIds.length; i++) {
     tags.push({
@@ -54,14 +55,13 @@ async function main() {
       price: prices[i].toString(),
       startAt: ethers.BigNumber.from(timestamp),
       endAt: ethers.BigNumber.from(timestamp + 3600 * 24),
-      maxTagCap: eth((allocations[i] * prices[i]) / 100000),
+      maxTagCap: eth((allocations[i] * prices[i])/100000),
       allocation: eth(allocations[i]),
-      maxParticipants: "5000"
+      maxParticipants: "500"
     });
     grandTotal += allocations[i] * prices[i]/100000;
     timestamp += 3600 * 24;
   }
-  grandTotal = grandTotal * 1000;
 
   let presaleSetup = {
     vestingContract: vesting.address,
@@ -72,7 +72,6 @@ async function main() {
     minAllocation: ethers.utils.parseEther("1"),
     maxAllocation: ethers.utils.parseEther("10000000"),
   }
-
   let contractSetup = {
     paymentReceiver: vault,
     admin: deployer,
@@ -90,9 +89,11 @@ async function main() {
     initialUnlockPercent: 20000 // 20%
   };
 
-  // console.log(timestamp)
+  // console.log( tagIds, tags)
   // await presale.initialize(deployer, presaleSetup, [], []);
-  await presale.updateGrandTotal(eth(grandTotal));
+  await presale.updateGrandTotal(eth(grandTotal + 10000));
+  console.log(timestamp)
+  console.log("update grand total")
   await presale.updateSetTags(tagIds, tags);
   console.log(await presale.tagIds())
 

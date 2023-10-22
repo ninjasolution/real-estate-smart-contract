@@ -6,13 +6,16 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./interfaces/ILinearVesting.sol";
 
 /**
  * @title LinearVesting
  */
-contract LinearVesting is ILinearVesting, ReentrancyGuard {
+contract LinearVesting is ILinearVesting, AccessControl, Ownable {
     using SafeMath for uint256;
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     // cliff period in seconds
     uint256 public cliff;
@@ -30,16 +33,14 @@ contract LinearVesting is ILinearVesting, ReentrancyGuard {
     struct ReleaseSchedule {
         uint256 amount;
         address paymentToken;
-        uint256 amountPerPaymentToken;
+        uint256 price;
         uint256 refundFee;
     }
 
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
-    );
+    event AddAdmin(address indexed _account);
+    event RemoveAdmin(address indexed _account);
 
-    address private _owner;
+
     string public name = "CWF Vesting";
     // address of the ERC20 token
     IERC20 private _token;
@@ -47,22 +48,26 @@ contract LinearVesting is ILinearVesting, ReentrancyGuard {
     mapping(address => bool) public initialCliamed;
     mapping(string => mapping(address => ReleaseSchedule))
         public releaseScheduleByTag;
-    uint64 public percentDivisor = 100000; // 1% = 1000
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        _checkOwner();
-        _;
-    }
+    uint64 public divisor = 100000; // 1% = 1000
 
     /**
      * @dev Creates a vesting contract.
      */
     constructor() {
-        _transferOwnership(msg.sender);
+        _grantRole(ADMIN_ROLE, msg.sender);
     }
+
+    /**
+     * @dev Throws if the sender is not the admin.
+     */
+    modifier onlyAdmin() {
+        require(
+            hasRole(ADMIN_ROLE, msg.sender),
+            "TokenVesting: DOES_NOT_HAVE_ADMIN_ROLE"
+        );
+        _;
+    }
+
 
     /**
      * @dev Sets the total claim amount for each account for tagId.
@@ -70,7 +75,7 @@ contract LinearVesting is ILinearVesting, ReentrancyGuard {
      * @param account user wallet address
      * @param amount total claim amount
      * @param paymentToken token address which user invested
-     * @param amountPerPaymentToken claim token amount per payment token
+     * @param price claim token amount per payment token
      * @param refundFee fee amount when user refunds the investment 1000 = 1%
      */
     function setCrowdfundingWhitelist(
@@ -78,14 +83,14 @@ contract LinearVesting is ILinearVesting, ReentrancyGuard {
         address account,
         uint256 amount,
         address paymentToken,
-        uint256 amountPerPaymentToken,
+        uint256 price,
         uint256 refundFee
-    ) external override {
+    ) external override onlyAdmin {
         ReleaseSchedule storage schedule = releaseScheduleByTag[tagId][account];
-            schedule.amount += amount;
-            schedule.paymentToken = paymentToken;
-            schedule.amountPerPaymentToken = amountPerPaymentToken;
-            schedule.refundFee = refundFee;
+        schedule.amount += amount;
+        schedule.paymentToken = paymentToken;
+        schedule.price = price;
+        schedule.refundFee = refundFee;
     }
 
     /**
@@ -124,27 +129,15 @@ contract LinearVesting is ILinearVesting, ReentrancyGuard {
         duration = vestingSetup.duration;
         amountTotal = contractSetup.totalTokenOnSale;
         totalReleased = 0;
+        _grantRole(ADMIN_ROLE, contractSetup.admin);
+
     }
-
-    /**
-     * @dev This function is called for plain Ether transfers, i.e. for every call with empty calldata.
-     */
-    receive() external payable {}
-
-    /**
-     * @dev Fallback function is executed if none of the other functions match the function
-     * identifier or no data was provided with the function call.
-     */
-    fallback() external payable {}
 
     /**
      * @notice Withdraw the specified amount if possible.
      * @param amount the amount to withdraw
      */
-    function withdraw(
-        address token,
-        uint256 amount
-    ) external nonReentrant onlyOwner {
+    function withdraw(address token, uint256 amount) external onlyOwner {
         require(
             getWithdrawableAmount() >= amount,
             "TokenVesting: not enough withdrawable funds"
@@ -159,16 +152,19 @@ contract LinearVesting is ILinearVesting, ReentrancyGuard {
      * @notice Refund the specified amount if possible.
      * @param amount the amount to refund
      */
-    function refund(
-        string calldata tagId,
-        uint256 amount
-    ) external nonReentrant {
-
+    function refund(string calldata tagId, uint256 amount) external {
         uint256 currentTime = getCurrentTime();
-        require(currentTime <= start + duration, "LinearVesting: Presale is finished.");
+        require(
+            currentTime <= start + duration,
+            "TokenVesting: Presale is finished."
+        );
 
-        ReleaseSchedule storage schedule = releaseScheduleByTag[tagId][msg.sender];
-        uint256 refundAmount = amount.mul(percentDivisor - schedule.refundFee).div(percentDivisor);
+        ReleaseSchedule storage schedule = releaseScheduleByTag[tagId][
+            msg.sender
+        ];
+        uint256 refundAmount = amount.mul(divisor - schedule.refundFee).div(
+            divisor
+        );
         IERC20(schedule.paymentToken).transfer(msg.sender, refundAmount);
         schedule.amount = schedule.amount.sub(amount);
     }
@@ -176,7 +172,7 @@ contract LinearVesting is ILinearVesting, ReentrancyGuard {
     /**
      * @notice claim vested amount of tokens.
      */
-    function claim(string calldata tagId) public nonReentrant {
+    function claim(string calldata tagId) external {
         uint256 claimableAmount = _computeReleasableAmount(tagId, msg.sender);
         uint256 rewardableAmount = claimableAmount - released[msg.sender];
         require(
@@ -227,21 +223,22 @@ contract LinearVesting is ILinearVesting, ReentrancyGuard {
         // Retrieve the current time.
         uint256 currentTime = getCurrentTime();
         ReleaseSchedule memory schedule = releaseScheduleByTag[tagId][account];
-        uint256 totalAmount = schedule.amount
-            .mul(10 ** (IERC20Metadata(address(_token)).decimals() - IERC20Metadata(schedule.paymentToken).decimals()))
-            .mul(schedule.amountPerPaymentToken);
+        uint256 totalAmount = schedule.amount.mul(schedule.price).div(divisor);
 
         // If the current time is after the vesting period, all tokens are releasable,
         // minus the amount already released.
         if (currentTime <= start.add(cliff)) {
-            return totalAmount.mul(initialUnlockPercent).div(percentDivisor);
+            return totalAmount.mul(initialUnlockPercent).div(divisor);
         } else if (currentTime >= start.add(duration)) {
-            return amountTotal;
+            return totalAmount;
         } else {
             uint256 claimableDuration = currentTime.sub(start + cliff);
             // Subtract the amount already released and return.
             uint256 amountPerSecond = totalAmount.div(duration - cliff);
-            return claimableDuration.mul(amountPerSecond);
+            return
+                claimableDuration.mul(amountPerSecond).add(
+                    totalAmount.mul(initialUnlockPercent).div(divisor)
+                );
         }
     }
 
@@ -254,51 +251,31 @@ contract LinearVesting is ILinearVesting, ReentrancyGuard {
     }
 
     /**
-     * @dev Returns the address of the current owner.
+     * @dev Adds account to blacker list
+     * @param _account The address to blacklist
      */
-    function owner() public view virtual returns (address) {
-        return _owner;
+    function addAdmin(address _account) external onlyAdmin {
+        _grantRole(ADMIN_ROLE, _account);
+        emit AddAdmin(_account);
     }
 
     /**
-     * @dev Throws if the sender is not the owner.
+     * @dev Removes account to blacker list
+     * @param _account The address to blacklist
      */
-    function _checkOwner() internal view virtual {
-        require(owner() == msg.sender, "Ownable: caller is not the owner");
+    function removeAdmin(address _account) external onlyAdmin {
+        _revokeRole(ADMIN_ROLE, _account);
+        emit RemoveAdmin(_account);
     }
 
     /**
-     * @dev Leaves the contract without owner. It will not be possible to call
-     * `onlyOwner` functions. Can only be called by the current owner.
-     *
-     * NOTE: Renouncing ownership will leave the contract without an owner,
-     * thereby disabling any functionality that is only available to the owner.
+     * @dev This function is called for plain Ether transfers, i.e. for every call with empty calldata.
      */
-    function renounceOwnership() public virtual onlyOwner {
-        _transferOwnership(address(0));
-    }
+    receive() external payable {}
 
     /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current owner.
+     * @dev Fallback function is executed if none of the other functions match the function
+     * identifier or no data was provided with the function call.
      */
-    function transferOwnership(
-        address newOwner
-    ) external virtual override onlyOwner {
-        require(
-            newOwner != address(0),
-            "Ownable: new owner is the zero address"
-        );
-        _transferOwnership(newOwner);
-    }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Internal function without access restriction.
-     */
-    function _transferOwnership(address newOwner) internal virtual {
-        address oldOwner = _owner;
-        _owner = newOwner;
-        emit OwnershipTransferred(oldOwner, newOwner);
-    }
+    fallback() external payable {}
 }

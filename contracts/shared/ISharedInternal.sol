@@ -11,7 +11,7 @@ interface ISharedInternal {
 
     struct Tag {
         Status status;
-        uint128 presaleTokenPerPaymentToken;
+        uint128 price;
         uint128 startAt;
         uint128 endAt;
         uint256 maxTagCap;

@@ -111,8 +111,8 @@ describe("CWF", function () {
         it("Add wallets and fees", async function () {
             await expect(token.connect(fund).udpateTaxWallets(fund.address, dev.address)).to.be.revertedWith("Ownable: caller is not the owner");
             await token.udpateTaxWallets(fund.address, dev.address);
-            await token.updateTaxFee(500, 100);
-            await expect(token.updateTaxFee(500, 1200)).to.be.revertedWith("CWF: Exceed Max Tax fee");
+            await token.updateTaxFee(500, 100, 1000);
+            await expect(token.updateTaxFee(500, 1200, 1000)).to.be.revertedWith("CWF: Exceed Max Tax fee");
         })
     })
 

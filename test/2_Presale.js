@@ -64,27 +64,20 @@ describe("Presale", function () {
 
     vestingSetup = {
       startTime: timestamp + 1,
-      cliff: 10,
-      duration: 50,
+      cliff: 0,
+      duration: 2,
       initialUnlockPercent: 1000 // 1%
     };
-
-
     let tagIds = []
-
     let tags = []
-
     await presale.initialize(deployer.address, presaleSetup, tagIds, tags);
     await vesting.initializeCrowdfunding(
       contractSetup,
       vestingSetup
     );
-    await vesting.transferOwnership(presale.address);
-
-    await cwfToken.approve(vesting.address, eth(10000));
-    await cwfToken.transfer(vesting.address, eth(10000));
-
-
+    await vesting.addAdmin(presale.address);
+    await cwfToken.approve(vesting.address, eth(1000000));
+    await cwfToken.transfer(vesting.address, eth(1000000));
   }
 
   before(async () => {
@@ -95,6 +88,9 @@ describe("Presale", function () {
     let maxTagAllocation = eth(1_000_000);
     tags = [];
 
+    let prices = [1900, 1950, 2000] // [0.19, 0.195, 0.20]
+    let allocations = [20000000, 60000000, 200000000]
+
     for (let i = 0; i < tagIdentifiers.length; i++) {
       maxTagAllocation = ethers.utils.parseEther((1000000 * (i || 0 + 1)).toString());
 
@@ -102,12 +98,12 @@ describe("Presale", function () {
       tags.push(
         {
           status: 0,
-          presaleTokenPerPaymentToken: 10,
-          startAt: _now + lastStart,
-          endAt: _now + lastEnd,
-          maxTagCap: eth(200000),
-          allocation: ethers.utils.parseEther("23000000"),
-          maxParticipants: 500000
+          price: prices[i].toString(),
+          startAt: ethers.BigNumber.from(lastStart),
+          endAt: ethers.BigNumber.from(lastEnd),
+          maxTagCap: eth((allocations[i] * prices[i]) / 100000),
+          allocation: eth(allocations[i]),
+          maxParticipants: "500"
         }
       );
 
@@ -117,10 +113,7 @@ describe("Presale", function () {
 
   })
 
-
-
   describe("Setup", function () {
-
 
     it('Setup', async () => {
       let summedMaxTagCap_ = 0;
@@ -130,7 +123,6 @@ describe("Presale", function () {
 
       await presale.updateGrandTotal(eth(50000000));
       await presale.updateSetTags(tagIdentifiers, tags);
-      console.log(await presale.tag(tagIdentifiers[0]))
 
       let setupResult = await presale.setUp();
       expect(summedMaxTagCap_.toString()).to.not.equals(setupResult.summedMaxTagCap.toString());
@@ -144,19 +136,32 @@ describe("Presale", function () {
       await presale.openPresale();
       await presale.openTag(tagIdentifiers[0]);
 
-      await paymentToken.approve(presale.address, amount)
-      await presale.reserveAllocation(tagIdentifiers[0], amount)
+      for (let i = 0; i < 100; i++) {
+        await paymentToken.approve(presale.address, amount)
+        await presale.reserveAllocation(tagIdentifiers[0], amount)
+      }
 
       await cwfToken.addWhitelist(vesting.address);
       // console.log(ethers.utils.formatEther(await vesting.computeReleasableAmount(allocations[0].tagId, deployer.address)))
-      await vesting.refund(tagIdentifiers[0], refundAmount)
-      await vesting.claim(tagIdentifiers[0])
+      // await vesting.refund(tagIdentifiers[0], refundAmount)
+      // await vesting.claim(tagIdentifiers[0])
+      // await expect(vesting.claim(tagIdentifiers[0])).to.changeTokenBalances(
+      //   cwfToken,
+      //   [vesting, fund, deployer],
+      //   [eth(100 * -1), 0, eth(100)]
+      // )
 
+      await expect(vesting.claim(tagIdentifiers[0])).to.changeTokenBalances(
+        cwfToken,
+        [vesting, fund, deployer],
+        [eth(10000 * -1), 0, eth(10000)]
+      )
+
+      await expect(vesting.withdraw(paymentToken.address, ethers.utils.parseEther("100000"))).to.changeTokenBalances(
+        paymentToken,
+        [vesting, fund, deployer],
+        [eth(100000 * -1), 0, eth(100000)]
+      )
     })
-
   })
-
-
-
-
 });
