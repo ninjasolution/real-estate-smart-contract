@@ -16,11 +16,11 @@ async function main() {
   let router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"; // goerli
   let vault = "0xB528422D8CB691a9Ab1D85F8e42ccd14dC6E54f5";
   let dev = "0xa415D52dd2bf10e2406e9e75a7F411EFCf025e64";
-  let deployer = "0x7B7887059860a1A21f3C62542B6CE5c0a23c76d5";
+  let deployer = "0x6B07eDe946dF86B01d4D9DF1f04Fe6Ef25AdbbD1";
   let usdt = "0x55d398326f99059fF775485246999027B3197955";
   let cwf = "0x677dDBfEA0D7870A6bE880eaa4Ce0d292cECfadC";
-  let _presale = "0x66751837c9F9e649d3Ce6b08cE511446FE6aFe67";
-  let _vesting = "0xDF284E8483190E7A4E1D0fc5f1D2b30e7D67A5c4";
+  let _presale = "0xEee590AF28106C3bEdda2A1C2Fe3BfE2aAFfEc52";
+  let _vesting = "0xDDba597cA5D02735676246027Ed72af4daeB3A0E";
 
   /* Tokens */
   const CWF = await hre.ethers.getContractFactory("CWF");
@@ -47,21 +47,22 @@ async function main() {
   let tags = []
   let block = await ethers.provider.getBlock("latest")
   let timestamp = block.timestamp;
-  timestamp = Number.parseInt(timestamp) + 3600*24
+  timestamp = Number.parseInt(timestamp) + 3600*24*3
   let grandTotal = 0;
   for (let i = 0; i < tagIds.length; i++) {
     tags.push({
       status: 0,
       price: prices[i].toString(),
       startAt: ethers.BigNumber.from(timestamp),
-      endAt: ethers.BigNumber.from(timestamp + 3600 * 24),
-      maxTagCap: eth((allocations[i] * prices[i])/100000),
+      endAt: ethers.BigNumber.from(timestamp + 3600 * 24*14),
+      maxTagCap: eth((allocations[i] * prices[i]) / 100000),
       allocation: eth(allocations[i]),
-      maxParticipants: "500"
+      maxParticipants: "50000"
     });
     grandTotal += allocations[i] * prices[i]/100000;
     timestamp += 3600 * 24;
   }
+  grandTotal = grandTotal * 10;
 
   let presaleSetup = {
     vestingContract: vesting.address,
@@ -91,11 +92,9 @@ async function main() {
 
   // console.log( tagIds, tags)
   // await presale.initialize(deployer, presaleSetup, [], []);
-  await presale.updateGrandTotal(eth(grandTotal + 10000));
-  console.log(timestamp)
-  console.log("update grand total")
+  await presale.updateGrandTotal(eth(grandTotal));
   await presale.updateSetTags(tagIds, tags);
-  console.log(await presale.tagIds())
+  // console.log(await presale.tagIds())
 
   // await vesting.initializeCrowdfunding(
   //   contractSetup,

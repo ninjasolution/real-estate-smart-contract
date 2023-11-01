@@ -28,7 +28,9 @@ module.exports = {
     },
     bsc: {
       url: "https://bsc-dataseed.binance.org/",
-      accounts: [PRIVATE_KEY]
+      accounts: [PRIVATE_KEY],
+      gasPrice: 20000000000,
+      gas: 6000000,
     },
     hardhat: {
       allowUnlimitedContractSize: true,

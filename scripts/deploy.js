@@ -46,14 +46,14 @@ async function main() {
   let tags = []
   let block = await ethers.provider.getBlock("latest")
   let timestamp = block.timestamp;
-  timestamp = Number.parseInt(timestamp) + 3600
+  timestamp = Number.parseInt(timestamp) + 3600*24*3
   let grandTotal = 0;
   for (let i = 0; i < tagIds.length; i++) {
     tags.push({
       status: 0,
       price: prices[i].toString(),
       startAt: ethers.BigNumber.from(timestamp),
-      endAt: ethers.BigNumber.from(timestamp + 3600 * 24),
+      endAt: ethers.BigNumber.from(timestamp + 3600 * 24*14),
       maxTagCap: eth((allocations[i] * prices[i]) / 100000),
       allocation: eth(allocations[i]),
       maxParticipants: "5000"
