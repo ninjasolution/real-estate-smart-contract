@@ -155,7 +155,7 @@ contract LinearVesting is ILinearVesting, AccessControl, Ownable {
     function refund(string calldata tagId, uint256 amount) external {
         uint256 currentTime = getCurrentTime();
         require(
-            currentTime <= start + duration,
+            currentTime <= start,
             "TokenVesting: Presale is finished."
         );
 
