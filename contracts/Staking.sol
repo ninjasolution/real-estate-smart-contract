@@ -6,9 +6,10 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract Staking is Ownable {
+contract Staking is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -245,7 +246,7 @@ contract Staking is Ownable {
      */
     function withdraw(
         uint64 durationIndex
-    ) public _realAddress(msg.sender) returns (bool) {
+    ) public _realAddress(msg.sender) nonReentrant returns (bool) {
         require(hasStaked[msg.sender], "No stakes found for user");
         require(!deposits[durationIndex][msg.sender].paid, "Already paid out");
         require(
@@ -289,7 +290,7 @@ contract Staking is Ownable {
      */
     function claim(
         uint64 durationIndex
-    ) public _realAddress(msg.sender) returns (bool) {
+    ) public _realAddress(msg.sender) nonReentrant returns (bool) {
         require(!deposits[durationIndex][msg.sender].paid, "Already paid out");
         uint256 reward = _calculate(
             durationIndex,
@@ -320,7 +321,7 @@ contract Staking is Ownable {
      */
     function emergencyWithdraw(
         uint64 durationIndex
-    ) external _realAddress(msg.sender) returns (bool) {
+    ) external _realAddress(msg.sender) nonReentrant returns (bool) {
         require(hasStaked[msg.sender], "No stakes found for user");
         require(!deposits[durationIndex][msg.sender].paid, "Already paid out");
 

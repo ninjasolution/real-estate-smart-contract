@@ -8,12 +8,13 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./interfaces/ILinearVesting.sol";
 
 /**
  * @title LinearVesting
  */
-contract LinearVesting is ILinearVesting, AccessControl, Ownable {
+contract LinearVesting is ILinearVesting, AccessControl, Ownable, ReentrancyGuard {
     using SafeMath for uint256;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
@@ -152,7 +153,7 @@ contract LinearVesting is ILinearVesting, AccessControl, Ownable {
      * @notice Refund the specified amount if possible.
      * @param amount the amount to refund
      */
-    function refund(string calldata tagId, uint256 amount) external {
+    function refund(string calldata tagId, uint256 amount) external nonReentrant {
         uint256 currentTime = getCurrentTime();
         require(
             currentTime <= start,
@@ -172,7 +173,7 @@ contract LinearVesting is ILinearVesting, AccessControl, Ownable {
     /**
      * @notice claim vested amount of tokens.
      */
-    function claim(string calldata tagId) external {
+    function claim(string calldata tagId) external nonReentrant {
         uint256 claimableAmount = _computeReleasableAmount(tagId, msg.sender);
         uint256 rewardableAmount = claimableAmount - released[msg.sender];
         require(

@@ -6,8 +6,9 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract YieldFarming is Ownable {
+contract YieldFarming is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -196,6 +197,7 @@ contract YieldFarming is Ownable {
         external
         _realAddress(msg.sender)
         _hasAllowance(msg.sender, amount, tokenAddress)
+        nonReentrant
         returns (bool)
     {
         require(!isPaused, "Contract is paused");
@@ -283,7 +285,7 @@ contract YieldFarming is Ownable {
     /**
      * @dev to claim reward token
      */
-    function claimRewards() public returns (bool) {
+    function claimRewards() public nonReentrant returns (bool) {
         require(fetchUserShare(msg.sender) > 0, "No stakes found for user");
         return (_claimRewards(msg.sender));
     }
@@ -424,6 +426,7 @@ contract YieldFarming is Ownable {
     function emergencyWithdraw()
         external
         _realAddress(msg.sender)
+        nonReentrant
         returns (bool)
     {
         require(hasStaked[msg.sender], "No stakes available for user");
@@ -446,7 +449,7 @@ contract YieldFarming is Ownable {
         return true;
     }
 
-    function withdraw() external _realAddress(msg.sender) returns (bool) {
+    function withdraw() external _realAddress(msg.sender) nonReentrant returns (bool) {
         if (deposits[msg.sender].currentPeriod == period) {
             if (calculate(msg.sender) > 0) {
                 bool rewardsPaid = claimRewards();
