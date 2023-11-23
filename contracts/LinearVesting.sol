@@ -14,7 +14,12 @@ import "./interfaces/ILinearVesting.sol";
 /**
  * @title LinearVesting
  */
-contract LinearVesting is ILinearVesting, AccessControl, Ownable, ReentrancyGuard {
+contract LinearVesting is
+    ILinearVesting,
+    AccessControl,
+    Ownable,
+    ReentrancyGuard
+{
     using SafeMath for uint256;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
@@ -40,7 +45,6 @@ contract LinearVesting is ILinearVesting, AccessControl, Ownable, ReentrancyGuar
 
     event AddAdmin(address indexed _account);
     event RemoveAdmin(address indexed _account);
-
 
     string public name = "CWF Vesting";
     // address of the ERC20 token
@@ -68,7 +72,6 @@ contract LinearVesting is ILinearVesting, AccessControl, Ownable, ReentrancyGuar
         );
         _;
     }
-
 
     /**
      * @dev Sets the total claim amount for each account for tagId.
@@ -125,13 +128,12 @@ contract LinearVesting is ILinearVesting, AccessControl, Ownable, ReentrancyGuar
         );
 
         cliff = vestingSetup.cliff;
-        initialUnlockPercent = vestingSetup.initialUnlockPercent; //20%
+        initialUnlockPercent = vestingSetup.initialUnlockPercent;
         start = vestingSetup.startTime;
         duration = vestingSetup.duration;
         amountTotal = contractSetup.totalTokenOnSale;
         totalReleased = 0;
         _grantRole(ADMIN_ROLE, contractSetup.admin);
-
     }
 
     /**
@@ -139,10 +141,6 @@ contract LinearVesting is ILinearVesting, AccessControl, Ownable, ReentrancyGuar
      * @param amount the amount to withdraw
      */
     function withdraw(address token, uint256 amount) external onlyOwner {
-        require(
-            getWithdrawableAmount() >= amount,
-            "TokenVesting: not enough withdrawable funds"
-        );
         /*
          * @dev Replaced owner() with msg.sender => address of WITHDRAWER_ROLE
          */
@@ -153,12 +151,12 @@ contract LinearVesting is ILinearVesting, AccessControl, Ownable, ReentrancyGuar
      * @notice Refund the specified amount if possible.
      * @param amount the amount to refund
      */
-    function refund(string calldata tagId, uint256 amount) external nonReentrant {
+    function refund(
+        string calldata tagId,
+        uint256 amount
+    ) external nonReentrant {
         uint256 currentTime = getCurrentTime();
-        require(
-            currentTime <= start,
-            "TokenVesting: Presale is finished."
-        );
+        require(currentTime <= start, "TokenVesting: Presale is finished.");
 
         ReleaseSchedule storage schedule = releaseScheduleByTag[tagId][
             msg.sender
@@ -203,14 +201,6 @@ contract LinearVesting is ILinearVesting, AccessControl, Ownable, ReentrancyGuar
         address account
     ) external view returns (uint256) {
         return _computeReleasableAmount(tagId, account);
-    }
-
-    /**
-     * @dev Returns the amount of tokens that can be withdrawn by the owner.
-     * @return the amount of tokens
-     */
-    function getWithdrawableAmount() public view returns (uint256) {
-        return _token.balanceOf(address(this)) - amountTotal;
     }
 
     /**

@@ -12,7 +12,7 @@
     "deploy:bsc": "npx hardhat run scripts/deploy-mainnet.js --network bsc",
     "compile": "npx hardhat compile",
     "verify": "npx hardhat verify --network goerli --constructor-args arguments.js",
-    "verify:bsc": "npx hardhat verify --network bsc",
+    "verify:bsc": "npx hardhat verify --network bsc --constructor-args arguments.js",
     "clean": "npx hardhat clean"
   },
   "devDependencies": {

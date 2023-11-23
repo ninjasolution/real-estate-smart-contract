@@ -4,7 +4,6 @@ pragma solidity ^0.8.17;
 interface ILinearVesting {
 
     struct ContractSetup {
-        address paymentReceiver;
         address admin;
         address vestedToken;
         uint256 platformFee;

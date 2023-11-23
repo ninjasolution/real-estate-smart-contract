@@ -12,15 +12,15 @@ const eth = (amount) => {
 
 async function main() {
 
-  // let router = "0x10ED43C718714eb63d5aA57B78B54704E256024E"; // bsc main
-  let router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"; // goerli
-  let vault = "0xB528422D8CB691a9Ab1D85F8e42ccd14dC6E54f5";
-  let dev = "0xa415D52dd2bf10e2406e9e75a7F411EFCf025e64";
-  let deployer = "0x6B07eDe946dF86B01d4D9DF1f04Fe6Ef25AdbbD1";
+  let router = "0x10ED43C718714eb63d5aA57B78B54704E256024E"; // bsc main
+  // let router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"; // goerli
+  let vault = "0xD14562135758d083698b0Ae04d1F355CC35D23F9";
+  let dev = "0x52098834b7b129283e12C81Be41da131477cf378";
+  let deployer = "0x52098834b7b129283e12C81Be41da131477cf378";
   let usdt = "0x55d398326f99059fF775485246999027B3197955";
-  let cwf = "0x677dDBfEA0D7870A6bE880eaa4Ce0d292cECfadC";
-  let _presale = "0xEee590AF28106C3bEdda2A1C2Fe3BfE2aAFfEc52";
-  let _vesting = "0xDDba597cA5D02735676246027Ed72af4daeB3A0E";
+  let cwf = "0x07869C388A4dEcf49bDC61eC1ED2B3AF8a27f116";
+  let _presale = "0x1F4F66D066Ff8D3ab31Ea470272773E312c87D59";
+  let _vesting = "0x8B452F0F241d48e4c0e711ac66146Cd3d060d8B7";
 
   /* Tokens */
   const CWF = await hre.ethers.getContractFactory("CWF");
@@ -42,13 +42,16 @@ async function main() {
 
   let tagIds = ["Private", "Seed", "Community"]
   // let tagIds = ["Private"]
-  let prices = [1900, 1950, 2000] // [0.19, 0.195, 0.20]
-  let allocations = [20000000, 60000000, 200000000]
+  let prices = [5000, 5500, 6000] // [0.05, 0.052, 0.054]
+  let allocations = [42000000, 70000000, 140000000] //[6%, 10%, 20%]
+  //12.6M
   let tags = []
   let block = await ethers.provider.getBlock("latest")
   let timestamp = block.timestamp;
-  timestamp = Number.parseInt(timestamp) + 3600*24*3
+
+  timestamp = Number.parseInt(timestamp) + 3600*24*0.01
   let grandTotal = 0;
+
   for (let i = 0; i < tagIds.length; i++) {
     tags.push({
       status: 0,
@@ -57,44 +60,49 @@ async function main() {
       endAt: ethers.BigNumber.from(timestamp + 3600 * 24*14),
       maxTagCap: eth((allocations[i] * prices[i]) / 100000),
       allocation: eth(allocations[i]),
-      maxParticipants: "50000"
+      maxParticipants: "5000000"
     });
     grandTotal += allocations[i] * prices[i]/100000;
     timestamp += 3600 * 24;
   }
-  grandTotal = grandTotal * 10;
+  grandTotal = grandTotal * 2;
 
   let presaleSetup = {
     vestingContract: vesting.address,
+    paymentReceiver: vault,
     paymentToken: usdt,
-    grandTotal: eth(grandTotal),
-    summedMaxTagCap: eth(grandTotal),
+    grandTotal: eth(10),
+    summedMaxTagCap: eth(100),
     refundFee: 10000,
     minAllocation: ethers.utils.parseEther("1"),
     maxAllocation: ethers.utils.parseEther("10000000"),
   }
+
   let contractSetup = {
-    paymentReceiver: vault,
     admin: deployer,
-    vestedToken: cwf,
+    vestedToken: cwfToken.address,
     platformFee: 0,
     totalTokenOnSale: eth(210000000),
     gracePeriod: 60,
     decimals: 18
   }
+  timestamp = Number.parseInt(block.timestamp) + 3600*24*30
 
   let vestingSetup = {
-    startTime: timestamp + 100,
-    cliff: 3600 * 24 * 30,
-    duration: 3600 * 24 * 30 * 5,
-    initialUnlockPercent: 20000 // 20%
+    startTime: timestamp,
+    cliff: 3600 * 24 * 10,
+    duration: 3600 * 24 * 30 * 6,
+    initialUnlockPercent: 0 // 20%
   };
 
-  // console.log( tagIds, tags)
   // await presale.initialize(deployer, presaleSetup, [], []);
-  await presale.updateGrandTotal(eth(grandTotal));
+  // console.log( "Initialized");
+  // await presale.updateGrandTotal(eth(grandTotal));
+  // console.log( "updateGrandTotal");
   await presale.updateSetTags(tagIds, tags);
-  // console.log(await presale.tagIds())
+  console.log( "updateSetTags");
+  // await presale.updateSetTag(tagIds[0], tags[0]);
+  console.log(await presale.tagIds())
 
   // await vesting.initializeCrowdfunding(
   //   contractSetup,
@@ -104,12 +112,13 @@ async function main() {
   // await vesting.addAdmin(presale.address);
   // console.log("22222222")
 
-  // await cwfToken.approve(vesting.address, eth(700000));
-  // await cwfToken.transfer(vesting.address, eth(70000));
+  // await cwfToken.approve(vesting.address, eth(10));
+  // await cwfToken.transfer(vesting.address, eth(10));
   // console.log("3333333")
 
   // await presale.openPresale();
   // await presale.openTag(tagIds[0]);
+  // await vesting.withdraw(cwfToken.address, eth(10));
 
 
 
@@ -142,7 +151,7 @@ async function main() {
   // let rates = ["32", "123", "297", "518"]; // APR: 0.32%, 1.23%, 2.97%, 5.18% APY: 4%, 5%, 6%, 7%
 
   // const Staking = await ethers.getContractFactory("Staking");
-  // const staking = await Staking.deploy(dev, "CWF Staking", cwf, cwf, durations, rates);
+  // const staking = await Staking.deploy(deployer, "CWF Staking", cwf, cwf, durations, rates);
   // await staking.deployed();
   // console.log("Staking to:", staking.address);
 

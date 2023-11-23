@@ -82,7 +82,7 @@ contract PresaleWritable is
         PresaleStorage.SetUp memory setUp,
         string[] calldata tagIds_,
         ISharedInternal.Tag[] calldata tags
-    ) external override initializer onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         require(owner != address(0), "PresaleWritable__owner_ZERO_ADDRESS");
 
         require(

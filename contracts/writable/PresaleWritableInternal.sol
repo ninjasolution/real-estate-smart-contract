@@ -18,7 +18,7 @@ contract PresaleWritableInternal is IPresaleWritableInternal {
     ) internal {
         IERC20(setUp.paymentToken).transferFrom(
             msg.sender,
-            setUp.vestingContract,
+            setUp.paymentReceiver,
             amount
         );
     }

@@ -7,6 +7,7 @@ library PresaleStorage {
     // Only updated by owner
     struct SetUp {
         address vestingContract;
+        address paymentReceiver;
         address paymentToken;
         // maximum amount of paymentToken that can be raised
         uint256 grandTotal;

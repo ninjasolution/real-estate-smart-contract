@@ -375,7 +375,7 @@ contract CWF is ERC20, AccessControl, Ownable, Pausable {
         address router,
         address _charityWallet,
         address _devWallet
-    ) ERC20("WORLD CONTRACT", "CWF") {
+    ) ERC20("UNIVERSAL CONTACT", "CWF") {
         _mint(msg.sender, 700_000_000 * 10 ** 18);
         _grantRole(BLACKER_ROLE, msg.sender);
         _grantRole(ADMIN_ROLE, msg.sender);

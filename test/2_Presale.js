@@ -14,6 +14,7 @@ describe("Presale", function () {
   var deployer, fund, target, cwfToken, paymentToken, cwfVesting, cwfFactory;
   var presale, vesting;
   var presaleSetup, contractSetup, vestingSetup;
+  let grandTotal = 0;
 
   var tagIdentifiers = ["Private", "Seed", "Community"]
   var tags = [];
@@ -43,16 +44,16 @@ describe("Presale", function () {
 
     presaleSetup = {
       vestingContract: vesting.address,
+      paymentReceiver: fund.address,
       paymentToken: paymentToken.address,
-      grandTotal: eth(100),
-      summedMaxTagCap: eth(1000),
+      grandTotal: eth(10),
+      summedMaxTagCap: eth(100),
       refundFee: 10000,
       minAllocation: ethers.utils.parseEther("1"),
       maxAllocation: ethers.utils.parseEther("100000"),
     }
 
     contractSetup = {
-      paymentReceiver: deployer.address,
       admin: deployer.address,
       vestedToken: cwfToken.address,
       platformFee: 10,
@@ -71,6 +72,9 @@ describe("Presale", function () {
     let tagIds = []
     let tags = []
     await presale.initialize(deployer.address, presaleSetup, tagIds, tags);
+    await presale.initialize(deployer.address, presaleSetup, tagIds, tags);
+    await presale.initialize(deployer.address, presaleSetup, tagIds, tags);
+    await presale.initialize(deployer.address, presaleSetup, tagIds, tags);
     await vesting.initializeCrowdfunding(
       contractSetup,
       vestingSetup
@@ -83,8 +87,8 @@ describe("Presale", function () {
   before(async () => {
     await deploy();
 
-    let lastStart = 60;
-    let lastEnd = 3600 * 10;
+    let _now = await time.latest();
+    _now += 3600*24*3;
     let maxTagAllocation = eth(1_000_000);
     tags = [];
 
@@ -94,22 +98,20 @@ describe("Presale", function () {
     for (let i = 0; i < tagIdentifiers.length; i++) {
       maxTagAllocation = ethers.utils.parseEther((1000000 * (i || 0 + 1)).toString());
 
-      let _now = await time.latest();
       tags.push(
         {
           status: 0,
           price: prices[i].toString(),
-          startAt: ethers.BigNumber.from(lastStart),
-          endAt: ethers.BigNumber.from(lastEnd),
+          startAt: ethers.BigNumber.from(_now),
+          endAt: ethers.BigNumber.from(_now + 3600 * 24*14),
           maxTagCap: eth((allocations[i] * prices[i]) / 100000),
           allocation: eth(allocations[i]),
-          maxParticipants: "500"
+          maxParticipants: "500000"
         }
       );
-
-      lastStart = lastEnd;
-      lastEnd += 3600;
+      grandTotal += allocations[i] * prices[i]/100000;
     }
+
 
   })
 
@@ -121,7 +123,7 @@ describe("Presale", function () {
         summedMaxTagCap_ += tags[i].maxTagCap;
       }
 
-      await presale.updateGrandTotal(eth(50000000));
+      await presale.updateGrandTotal(eth(grandTotal * 2));
       await presale.updateSetTags(tagIdentifiers, tags);
 
       let setupResult = await presale.setUp();
@@ -138,7 +140,11 @@ describe("Presale", function () {
 
       for (let i = 0; i < 100; i++) {
         await paymentToken.approve(presale.address, amount)
-        await presale.reserveAllocation(tagIdentifiers[0], amount)
+        await expect(presale.reserveAllocation(tagIdentifiers[0], amount)).to.changeTokenBalances(
+          paymentToken,
+          [deployer, fund, target],
+          [eth(1000 * -1), amount, 0]
+        )
       }
 
       await cwfToken.addWhitelist(vesting.address);
@@ -154,13 +160,17 @@ describe("Presale", function () {
       await expect(vesting.claim(tagIdentifiers[0])).to.changeTokenBalances(
         cwfToken,
         [vesting, fund, deployer],
-        [eth(10000 * -1), 0, eth(10000)]
+        [eth(1900 * -1), 0, eth(1900)]
       )
 
-      await expect(vesting.withdraw(paymentToken.address, ethers.utils.parseEther("100000"))).to.changeTokenBalances(
-        paymentToken,
+     
+
+      const balance = await cwfToken.balanceOf(vesting.address);
+
+      await expect(vesting.withdraw(cwfToken.address, balance)).to.changeTokenBalances(
+        cwfToken,
         [vesting, fund, deployer],
-        [eth(100000 * -1), 0, eth(100000)]
+        [eth(ethers.utils.formatEther(balance) * -1), 0, balance]
       )
     })
   })

@@ -19,7 +19,7 @@ async function main() {
   let deployer = "0x7B7887059860a1A21f3C62542B6CE5c0a23c76d5";
   let usdt = "0x7E887A370A403fdAbeAaE18875317731FBf9D73b";
   let cwf = "0xd60B6A76c532E51E44c8CA3e42672E2a73b6B1bb";
-  let _presale = "0x6c93711f79F65A7AFE4478258F8B5cE2CEC87b43";
+  let _presale = "0xb86528b2c64c9E2e88d8bBf10C96Cc4Fe2567aFe";
   let _vesting = "0x48149d0f8e5cd465b629A1de183766c87Bec2a2A";
 
   /* Tokens */
@@ -36,11 +36,12 @@ async function main() {
 
   /* Vesting */
   const Vesting = await hre.ethers.getContractFactory("LinearVesting");
-  // const vesting = await Vesting.deploy()
-  const vesting = await Vesting.attach(_vesting)
+  const vesting = await Vesting.deploy()
+  // const vesting = await Vesting.attach(_vesting)
   console.log("Vesting to:", vesting.address);
 
   let tagIds = ["Private", "Seed", "Community"]
+  // let tagIds = ["Private"]
   let prices = [1900, 1950, 2000] // [0.19, 0.195, 0.20]
   let allocations = [20000000, 60000000, 200000000]
   let tags = []
@@ -61,20 +62,20 @@ async function main() {
     grandTotal += allocations[i] * prices[i]/100000;
     timestamp += 3600 * 24;
   }
-  grandTotal = grandTotal * 1000;
+  grandTotal = grandTotal;
 
   let presaleSetup = {
     vestingContract: vesting.address,
+    paymentReceiver: vault,
     paymentToken: usdt,
     grandTotal: eth(grandTotal),
-    summedMaxTagCap: eth(grandTotal),
+    summedMaxTagCap: eth(grandTotal + 10000),
     refundFee: 10000,
     minAllocation: ethers.utils.parseEther("1"),
     maxAllocation: ethers.utils.parseEther("10000000"),
   }
 
   let contractSetup = {
-    paymentReceiver: vault,
     admin: deployer,
     vestedToken: cwf,
     platformFee: 0,
@@ -90,10 +91,12 @@ async function main() {
     initialUnlockPercent: 20000 // 20%
   };
 
-  // console.log(timestamp)
   // await presale.initialize(deployer, presaleSetup, [], []);
-  await presale.updateGrandTotal(eth(grandTotal));
-  await presale.updateSetTags(tagIds, tags);
+  // console.log("Initialized")
+  // await presale.updateGrandTotal(eth(grandTotal));
+  // console.log("updateGrandTotal")
+  let tx = await presale.updateSetTags(tagIds, tags);
+  // console.log(tx)
   console.log(await presale.tagIds())
 
   // await vesting.initializeCrowdfunding(
