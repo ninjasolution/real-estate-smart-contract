@@ -57,7 +57,7 @@ async function main() {
       status: 0,
       price: prices[i].toString(),
       startAt: ethers.BigNumber.from(timestamp),
-      endAt: ethers.BigNumber.from(timestamp + 3600 * 24*14),
+      endAt: ethers.BigNumber.from(timestamp + 3600 * 24*15),
       maxTagCap: eth((allocations[i] * prices[i]) / 100000),
       allocation: eth(allocations[i]),
       maxParticipants: "5000000"
@@ -99,7 +99,7 @@ async function main() {
   // console.log( "Initialized");
   // await presale.updateGrandTotal(eth(grandTotal));
   // console.log( "updateGrandTotal");
-  await presale.updateSetTags(tagIds, tags);
+  await presale.updateSetTags(tagIds, tags, { gasLimit: 20000000 });
   console.log( "updateSetTags");
   // await presale.updateSetTag(tagIds[0], tags[0]);
   console.log(await presale.tagIds())

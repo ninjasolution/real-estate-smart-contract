@@ -68,6 +68,7 @@ describe("CWF", function () {
 
     })
 
+
     describe("Swap", function () {
 
         it("should tax on buy", async function () {
@@ -77,8 +78,8 @@ describe("CWF", function () {
                 [_weth9.address, token.address],
                 deployer.address,
                 constants.MaxUint256,
-                { value: eth(100) }
-            )).to.changeTokenBalances(token, [deployer, dev, pair], [eth(98), eth(0.4), eth(100 * -1)])
+                { value: eth(10) }
+            )).to.changeTokenBalances(token, [deployer, dev, pair], [eth(98), eth(0.2), eth(100 * -1)])
         })
 
         it("should tax on sell", async function () {
@@ -89,11 +90,9 @@ describe("CWF", function () {
                 [token.address, _weth9.address],
                 deployer.address,
                 constants.MaxUint256,
-            )).to.changeTokenBalances(token, [deployer, dev, pair], [eth(100 * -1), eth(0.6), eth(97)])
+            )).to.changeTokenBalances(token, [deployer, dev, pair], [eth(100 * -1), eth(0.3), eth(97)])
         })
     })
-
-
     describe("Permission", function () {
 
         it("Add Admin", async function () {

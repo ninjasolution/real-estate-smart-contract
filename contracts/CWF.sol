@@ -6,8 +6,8 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 interface IUniswapV2Factory {
     event PairCreated(
@@ -332,7 +332,7 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
     ) external;
 }
 
-contract CWF is ERC20, AccessControl, Ownable, Pausable {
+contract CWF is ERC20, AccessControl, ReentrancyGuard, Ownable {
     using SafeMath for uint256;
 
     bytes32 public constant BLACKER_ROLE = keccak256("BLACKER_ROLE");
@@ -417,7 +417,7 @@ contract CWF is ERC20, AccessControl, Ownable, Pausable {
         address from,
         address to,
         uint256 amount
-    ) internal virtual override {
+    ) internal virtual override nonReentrant {
         require(
             !(blacklisted[from] && !blacklisted[to]),
             "CWF: Black listed account."
